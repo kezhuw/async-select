@@ -1,0 +1,16 @@
+[package]
+name = "async-select"
+authors = ["Kezhu Wang <kezhuw@gmail.com>"]
+license = "Apache-2.0"
+version = "0.1.0"
+homepage = "https://github.com/kezhuw/async-select"
+repository = "https://github.com/kezhuw/async-select"
+documentation = "https://docs.rs/async-select"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+
+[dev-dependencies]
+tokio = { version = "1.37.0", features = ["full"] }
