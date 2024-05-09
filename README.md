@@ -105,5 +105,5 @@ async fn patterns() {
 ## Links
 * [crossbeam-channel](https://docs.rs/crossbeam/0.8.4/crossbeam/channel/macro.select.html): this is where I learned what real marcos look like.
 * [stuck::select](https://docs.rs/stuck/0.4.0/stuck/macro.select.html): this is where `async-select::select!` derive from.
-* [tokio](https://docs.rs/tokio): tokio is great on it own. But it is apprently not kind to runtime agnostic library. You simpley can't tell which part of it is runtime agnostic. So better to avoid it entirely if you even want runtime agnostic.
+* [tokio](https://docs.rs/tokio): tokio is great on it own. But it is apprently not kind to runtime agnostic library. You simply can't tell which part of it is runtime agnostic. So better to avoid it entirely if you even want runtime agnostic.
 * [The Little Book of Rust Macros](https://veykril.github.io/tlborm/decl-macros/macros-methodical.html): hmm, the book.
