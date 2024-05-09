@@ -5,6 +5,7 @@ license = "Apache-2.0"
 version = "0.1.0"
 homepage = "https://github.com/kezhuw/async-select"
 repository = "https://github.com/kezhuw/async-select"
+description = "`select!` multiplex asynchronous futures simultaneously"
 documentation = "https://docs.rs/async-select"
 edition = "2021"
 
