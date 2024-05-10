@@ -115,6 +115,7 @@ macro_rules! select_internal {
         ()
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(@no-branch {
             default: $default,
@@ -127,6 +128,7 @@ macro_rules! select_internal {
         $branches:tt
         ()
         ()
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @poll
@@ -135,7 +137,9 @@ macro_rules! select_internal {
             count = $count,
             branches = $branches,
             default = unreachable!("not in unblocking mode"),
-            complete = panic!("all branches are disabled or completed and there is no `default` nor `complete`"))
+            complete = panic!("all branches are disabled or completed and there is no `default` nor `complete`")
+            ; biased = $biased
+        )
     };
     (@list
         ()
@@ -143,6 +147,7 @@ macro_rules! select_internal {
         $branches:tt
         ()
         ($complete:tt)
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @poll
@@ -151,7 +156,9 @@ macro_rules! select_internal {
             count = $count,
             branches = $branches,
             default = unreachable!("not in unblocking mode"),
-            complete = $complete)
+            complete = $complete
+            ; biased = $biased
+        )
     };
     (@list
         ()
@@ -159,6 +166,7 @@ macro_rules! select_internal {
         $branches:tt
         ($default:tt)
         ()
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @poll
@@ -167,7 +175,9 @@ macro_rules! select_internal {
             count = $count,
             branches = $branches,
             default = $default,
-            complete = panic!("all branches are disabled or completed and there is no `default` nor `complete`"))
+            complete = panic!("all branches are disabled or completed and there is no `default` nor `complete`")
+            ; biased = $biased
+        )
     };
     (@list
         ()
@@ -175,6 +185,7 @@ macro_rules! select_internal {
         $branches:tt
         ($default:tt)
         ($complete:tt)
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @poll
@@ -183,7 +194,9 @@ macro_rules! select_internal {
             count = $count,
             branches = $branches,
             default = $default,
-            complete = $complete)
+            complete = $complete
+            ; biased = $biased
+        )
     };
 
     // `complete` in last case.
@@ -193,6 +206,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         ($complete:tt)
+        ; biased = $biased:expr
     ) => {
         compile_error!("`select!`: more than one `complete` clauses")
     };
@@ -202,6 +216,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         ($complete:tt)
+        ; biased = $biased:expr
     ) => {
         compile_error!("`select!`: more than one `complete` clauses")
     };
@@ -211,6 +226,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         ()
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -219,6 +235,7 @@ macro_rules! select_internal {
             $branches:tt
             $default
             ($body)
+            ; biased = $biased
          )
     };
     // `complete` in no last case.
@@ -228,6 +245,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         ()
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -236,6 +254,7 @@ macro_rules! select_internal {
             $branches
             $default
             ($body)
+            ; biased = $biased
         )
     };
     (@list
@@ -244,6 +263,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         ()
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -252,6 +272,7 @@ macro_rules! select_internal {
             $branches
             $default
             ($body)
+            ; biased = $biased
         )
     };
     (@list
@@ -260,6 +281,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         ()
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -268,6 +290,7 @@ macro_rules! select_internal {
             $branches
             $default
             ($body)
+            ; biased = $biased
         )
     };
     (@list
@@ -276,6 +299,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(@missing-comma "complete clause");
     };
@@ -287,6 +311,7 @@ macro_rules! select_internal {
         $branches:tt
         ($default:tt)
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         compile_error!("`select!`: more than one `default` clauses")
     };
@@ -296,6 +321,7 @@ macro_rules! select_internal {
         $branches:tt
         ($default:tt)
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         compile_error!("`select!`: more than one `default` clauses")
     };
@@ -306,6 +332,7 @@ macro_rules! select_internal {
         $branches:tt
         ()
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -314,6 +341,7 @@ macro_rules! select_internal {
             $branches
             ($body)
             $complete
+            ; biased = $biased
         )
     };
     // `default` in no last case
@@ -323,6 +351,7 @@ macro_rules! select_internal {
         $branches:tt
         ()
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -331,6 +360,7 @@ macro_rules! select_internal {
             $branches
             ($body)
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -339,6 +369,7 @@ macro_rules! select_internal {
         $branches:tt
         ()
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -347,6 +378,7 @@ macro_rules! select_internal {
             $branches
             ($body)
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -355,6 +387,7 @@ macro_rules! select_internal {
         $branches:tt
         ()
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -363,6 +396,7 @@ macro_rules! select_internal {
             $branches
             ($body)
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -371,6 +405,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(@missing-comma "default clause");
     };
@@ -382,6 +417,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -391,6 +427,7 @@ macro_rules! select_internal {
             $branches
             $default
             $complete
+            ; biased = $biased
         )
     };
 
@@ -401,6 +438,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -409,6 +447,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -417,6 +456,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -425,6 +465,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -433,6 +474,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -441,6 +483,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -449,6 +492,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -457,6 +501,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -465,6 +510,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -473,6 +519,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -481,6 +528,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -489,6 +537,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -497,6 +546,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -505,6 +555,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -513,6 +564,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
         ) => {
         $crate::select_internal!(
             @list
@@ -521,6 +573,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
 
@@ -531,6 +584,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -539,6 +593,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -547,6 +602,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -555,6 +611,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -563,6 +620,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -571,6 +629,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -579,6 +638,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -587,6 +647,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -595,6 +656,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -603,6 +665,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -611,6 +674,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -619,6 +683,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -627,6 +692,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -635,6 +701,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -643,7 +710,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -651,6 +719,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
 
@@ -661,6 +730,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -669,6 +739,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -677,6 +748,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -685,6 +757,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -693,6 +766,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -701,6 +775,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -709,7 +784,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ()
@@ -717,6 +793,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -725,6 +802,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -733,6 +811,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -741,6 +820,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -749,6 +829,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -757,6 +838,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -765,6 +847,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -773,6 +856,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -781,6 +865,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
 
@@ -792,7 +877,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -800,6 +886,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -808,7 +895,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -816,6 +904,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -824,7 +913,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -832,6 +922,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -840,7 +931,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -848,6 +940,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if $condition => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -856,7 +949,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -864,6 +958,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -872,7 +967,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -880,6 +976,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -888,7 +985,8 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
-        ) => {
+        ; biased = $biased:expr
+    ) => {
         $crate::select_internal!(
             @list
             ($($token)*)
@@ -896,6 +994,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
     (@list
@@ -904,6 +1003,7 @@ macro_rules! select_internal {
         ($($branch:tt)*)
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(
             @list
@@ -912,6 +1012,7 @@ macro_rules! select_internal {
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if true => $body,)
             $default
             $complete
+            ; biased = $biased
         )
     };
 
@@ -922,6 +1023,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         $crate::select_internal!(@missing-comma concat!("clause \"", stringify!($pattern = $future), "\""));
     };
@@ -933,6 +1035,7 @@ macro_rules! select_internal {
         $branches:tt
         $default:tt
         $complete:tt
+        ; biased = $biased:expr
     ) => {
         compile_error!(concat!("fail to list select: ", stringify!($tokens)))
     };
@@ -947,6 +1050,7 @@ macro_rules! select_internal {
         branches = ($([$index:tt, $capture:pat] $pattern:pat = $future:expr, if $condition:expr => $evaluation:expr,)+),
         default = $default:expr,
         complete = $complete:expr
+        ; biased = $biased:expr
     ) => {{
         const BRANCHES: usize = $crate::select_internal!(@count $count);
         const COMPLETED: u64 = if BRANCHES == 64 { u64::MAX } else { (1u64 << BRANCHES) - 1 };
@@ -960,9 +1064,13 @@ macro_rules! select_internal {
                     $crate::select_internal!(@assign $index, __select_futures, Some($future));
                 }
             )*
-            ::core::future::poll_fn(|cx| {
+            let start = if $biased {
+                0
+            } else {
                 let stack_addr = 0usize;
-                let start = ((&stack_addr as *const usize as usize) >> 3) % BRANCHES;
+                (&stack_addr as *const usize as usize) >> 3
+            };
+            ::core::future::poll_fn(|cx| {
                 let mut completions = 0;
                 for i in 0..BRANCHES {
                     let branch = (start + i) % BRANCHES;
@@ -3927,8 +4035,11 @@ macro_rules! select_internal {
     };
 
     // Entry points.
+    (biased; $($token:tt)*) => {
+        $crate::select_internal!(@list ($($token)*) () () () (); biased = true)
+    };
     ($($token:tt)*) => {
-        $crate::select_internal!(@list ($($token)*) () () () ())
+        $crate::select_internal!(@list ($($token)*) () () () (); biased = false)
     }
 }
 
