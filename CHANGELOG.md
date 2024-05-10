@@ -7,6 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.2.0] - 2024-05-10
+- Add biased mode to do sequential polling ([#2](https://github.com/kezhuw/async-select/pull/2) [82adfca](https://github.com/kezhuw/async-select/commit/82adfcab100f9c0191e188f741315134398c5ef9))
+
 ## [0.1.1] - 2024-05-10
 ### Changed
 - Drop `#[cfg(doc)]` for downstream doc inline [ad54992](https://github.com/kezhuw/async-select/commit/ad5499292f4d8c7fc2f9f3874b474634708e1522)
@@ -15,5 +18,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 - `select!` to multiplex asynchronous futures simultaneously
 
+[0.2.0]: https://github.com/kezhuw/async-select/compare/v0.1.1...v0.2.0
 [0.1.1]: https://github.com/kezhuw/async-select/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/kezhuw/async-select/releases/tag/v0.1.0

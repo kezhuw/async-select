@@ -2,7 +2,7 @@
 name = "async-select"
 authors = ["Kezhu Wang <kezhuw@gmail.com>"]
 license = "Apache-2.0"
-version = "0.1.1"
+version = "0.2.0"
 homepage = "https://github.com/kezhuw/async-select"
 repository = "https://github.com/kezhuw/async-select"
 description = "`select!` multiplex asynchronous futures simultaneously"
