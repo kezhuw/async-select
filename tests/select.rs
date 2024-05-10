@@ -13,6 +13,57 @@ async fn expression_type() -> Result<(), std::io::Error> {
 }
 
 #[tokio::test]
+async fn biased_all_ready() {
+    let r = select! {
+        biased;
+        v = ready(1) => v,
+        v = ready(2) => v,
+        v = ready(3) => v,
+        v = ready(4) => v,
+    };
+    assert_eq!(r, 1);
+}
+
+#[tokio::test]
+async fn biased_partial_ready() {
+    let r = select! {
+        biased;
+        v = pending() => v,
+        v = pending() => v,
+        v = ready(3) => v,
+        v = ready(4) => v,
+    };
+    assert_eq!(r, 3);
+}
+
+#[tokio::test]
+async fn biased_no_ready_default() {
+    let r = select! {
+        biased;
+        v = pending() => v,
+        v = pending() => v,
+        v = pending() => v,
+        v = pending() => v,
+        default => 3,
+    };
+    assert_eq!(r, 3);
+}
+
+#[tokio::test]
+async fn biased_no_ready() {
+    let r = select! {
+        biased;
+        v = pending() => v,
+        v = pending() => v,
+        v = pending() => v,
+        v = pending() => v,
+        _ = sleep(Duration::from_millis(5)) => 3,
+        complete => 5,
+    };
+    assert_eq!(r, 3);
+}
+
+#[tokio::test]
 async fn ready_default() {
     let r = select! {
         v = ready(5) => v,
