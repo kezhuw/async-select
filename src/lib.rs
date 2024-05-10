@@ -1,101 +1,85 @@
 #![no_std]
 
-//! # Select multiplex asynchronous futures simultaneously
-//!
-//! `select!` supports three different clauses:
-//!
-//! * pattern = future [, if condition] => code,
-//! * default => code,
-//! * complete => code,
-//!
-//! ## Evaluation order
-//! * All conditions and futures are evaluated before selection.
-//! * Future expression is not evaluated if corresponding condition evaluated to false.
-//! * Whenever a branch is ready, its clause is executed. And the whole select returns.
-//! * Fail to match a refutable pattern will disable that branch.
-//! * `default` clause is executed if no futures are ready. That is non blocking mode.
-//! * If all branches are disabled by conditions or refutable pattern match, it resort to
-//!   `complete` or `default` in case of no `complete`.
-//!
-//! ## Panics
-//! * Panic when all futures are disabled or completed and there is no `default` or `complete`.
-//!
-//! ## Limitations
-//! * Support up to 64 branches.
-//! * Refutability check may cause false negative compilation error. As results are matched against
-//!   `&mut output` but not value which will be fed to matching clause.
-//!
-//! ## Comparing with `tokio::select!`
-//! * Future expression is only evaluated if condition meets.
-//!   ```
-//!   use std::future::ready;
-//!   use async_select::select;
-//!
-//!   async fn guard_future_by_condition() {
-//!       let opt: Option<i32> = None;
-//!       let r = select! {
-//!           v = ready(opt.unwrap()), if opt.is_some() => v,
-//!           v = ready(6) => v,
-//!       };
-//!       assert_eq!(r, 6);
-//!   }
-//!   ```
-//!   This will panic in `tokio::select!` as it evaluates `ready(opt.unwrap())` irrespective of
-//!   corresponding condition.
-//! * There is no `default` counterpart in `tokio::select!`. But it could be emulated with `biased`
-//!   and `ready(())`.`complete` is same as `else` in `tokio::select!`.
-//! * `tokio::select!` strips the pattern using in refutability through `proc_marco`. This avoid
-//!   false negative compilation error.
-//! * `async_select::select!` is dependency free and hence `no_std` compatible.
-//!
-//! ## Efficiency
-//! `select!` blindly `Future:poll` all enabled futures without checking for waking branch.
-//!
-//! ## Examples
-//! ```rust
-//! use async_select::select;
-//! use core::future::{pending, ready};
-//!
-//! async fn on_ready() {
-//!     let r = select! {
-//!         _ = pending() => unreachable!(),
-//!         v = ready(5) => v,
-//!         default => unreachable!(),
-//!     };
-//!     assert_eq!(r, 5);
-//! }
-//! ```
-
-/// Select multiplex asynchronous futures simultaneously.
-#[cfg(doc)]
+/// # Select multiplex asynchronous futures simultaneously
+///
+/// `select!` supports three different clauses:
+///
+/// * pattern = future [, if condition] => code,
+/// * default => code,
+/// * complete => code,
+///
+/// ## Evaluation order
+/// * All conditions and futures are evaluated before selection.
+/// * Future expression is not evaluated if corresponding condition evaluated to false.
+/// * Whenever a branch is ready, its clause is executed. And the whole select returns.
+/// * Fail to match a refutable pattern will disable that branch.
+/// * `default` clause is executed if no futures are ready. That is non blocking mode.
+/// * If all branches are disabled by conditions or refutable pattern match, it resort to
+///   `complete` or `default` in case of no `complete`.
+///
+/// ## Panics
+/// * Panic when all futures are disabled or completed and there is no `default` or `complete`.
+///
+/// ## Limitations
+/// * Support up to 64 branches.
+/// * Refutability check may cause false negative compilation error. As results are matched against
+///   `&mut output` but not value which will be fed to matching clause.
+///
+/// ## Comparing with `tokio::select!`
+/// * Future expression is only evaluated if condition meets.
+///   ```
+///   use std::future::ready;
+///   use async_select::select;
+///
+///   async fn guard_future_by_condition() {
+///       let opt: Option<i32> = None;
+///       let r = select! {
+///           v = ready(opt.unwrap()), if opt.is_some() => v,
+///           v = ready(6) => v,
+///       };
+///       assert_eq!(r, 6);
+///   }
+///   ```
+///   This will panic in `tokio::select!` as it evaluates `ready(opt.unwrap())` irrespective of
+///   corresponding condition.
+/// * There is no `default` counterpart in `tokio::select!`. But it could be emulated with `biased`
+///   and `ready(())`.`complete` is same as `else` in `tokio::select!`.
+/// * `tokio::select!` strips the pattern using in refutability through `proc_marco`. This avoid
+///   false negative compilation error.
+/// * `async_select::select!` is dependency free and hence `no_std` compatible.
+///
+/// ## Efficiency
+/// `select!` blindly `Future:poll` all enabled futures without checking for waking branch.
+///
+/// ## Examples
+/// ```rust
+/// use async_select::select;
+/// use core::future::{pending, ready};
+///
+/// async fn on_ready() {
+///     let r = select! {
+///         _ = pending() => unreachable!(),
+///         v = ready(5) => v,
+///         default => unreachable!(),
+///     };
+///     assert_eq!(r, 5);
+/// }
+/// ```
 #[macro_export]
 macro_rules! select {
+    ($($tokens:tt)*) => {
+        $crate::select_internal!($($tokens)*)
+    };
+
+    // For documentation purpose.
     (default => $body:expr) => {};
     (complete => $body:expr) => {};
     ($pattern:pat = $future:expr $(, if $condition:expr)? => $body:expr) => {};
 }
 
-// As you may saw this macro is pretty long, most complexity comes from:
-// * Macros are not permitted to use everywhere. Say, you can't iterate repetition inside "<_>",
-//   so I have to write generic output types for all combination up to 64 branches. This takes 2500
-//   lines.
-// * Support up to 64 branches and avoid macro expansion `recursion_limit` so I have to exhaust
-//   possible match in one round.
-// * The match is not greedy, so I can't use `$(,)? $($token:tt)*` but exhaustion as `,` is also a
-//   valid token.
-// * There is no way to expand at most once with else clause. So I have to match and normalize
-//   separately. This is `$(, if $condition:expr)?`.
-// * Macro output must be itself a valid syntex tree. Say, I can't generate `if $condition {` and
-//   `}` separately based on at most once repetion.
-// * There is no way to capture matched literals but handwritten. I can't use `$(ref)? $(mut)?` to
-//   capture them and use it later. So, I have to exhauste them.
-// * Given above, I have to exhuaste combinations of `$(ref)?`, `$(mut)?`, `$(, if $condition:expr)?`
-//   and `$(,)?`.
-//
-// I might be totally wrong in above. Please point them out in issue/pr.
-#[cfg(not(doc))]
+#[doc(hidden)]
 #[macro_export]
-macro_rules! select {
+macro_rules! select_internal {
     // @list($tokens:tt $count:tt $branches:tt $default:tt $complete:tt) list branches
     // @poll all futures
     //
@@ -104,6 +88,26 @@ macro_rules! select {
     // @access($index, $futures:ident) access future from indexed tuple field
     // @unwrap($index, $pattern:pat) pattern match output base on index
     // @wrap($index, $output) wrap output based on index for pattern match
+    //
+    //
+    // As you may saw this macro is pretty long, most complexity comes from:
+    // * Macros are not permitted to use everywhere. Say, you can't iterate repetition inside "<_>",
+    //   so I have to write generic output types for all combination up to 64 branches. This takes 2500
+    //   lines.
+    // * Support up to 64 branches and avoid macro expansion `recursion_limit` so I have to exhaust
+    //   possible match in one round.
+    // * The match is not greedy, so I can't use `$(,)? $($token:tt)*` but exhaustion as `,` is also a
+    //   valid token.
+    // * There is no way to expand at most once with else clause. So I have to match and normalize
+    //   separately. This is `$(, if $condition:expr)?`.
+    // * Macro output must be itself a valid syntex tree. Say, I can't generate `if $condition {` and
+    //   `}` separately based on at most once repetion.
+    // * There is no way to capture matched literals but handwritten. I can't use `$(ref)? $(mut)?` to
+    //   capture them and use it later. So, I have to exhauste them.
+    // * Given above, I have to exhuaste combinations of `$(ref)?`, `$(mut)?`, `$(, if $condition:expr)?`
+    //   and `$(,)?`.
+    //
+    // I might be totally wrong in above. Please point them out in issue/pr.
 
     (@list
         ()
@@ -112,7 +116,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(@no-branch {
+        $crate::select_internal!(@no-branch {
             default: $default,
             complete: $complete,
         })
@@ -124,7 +128,7 @@ macro_rules! select {
         ()
         ()
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @poll
             non_blocking = false,
             when_completed = false,
@@ -140,7 +144,7 @@ macro_rules! select {
         ()
         ($complete:tt)
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @poll
             non_blocking = false,
             when_completed = true,
@@ -156,7 +160,7 @@ macro_rules! select {
         ($default:tt)
         ()
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @poll
             non_blocking = true,
             when_completed = false,
@@ -172,7 +176,7 @@ macro_rules! select {
         ($default:tt)
         ($complete:tt)
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @poll
             non_blocking = true,
             when_completed = true,
@@ -208,7 +212,7 @@ macro_rules! select {
         $default:tt
         ()
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             $count
@@ -225,7 +229,7 @@ macro_rules! select {
         $default:tt
         ()
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             $count
@@ -241,7 +245,7 @@ macro_rules! select {
         $default:tt
         ()
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             $count
@@ -257,7 +261,7 @@ macro_rules! select {
         $default:tt
         ()
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             $count
@@ -273,7 +277,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(@missing-comma "complete clause");
+        $crate::select_internal!(@missing-comma "complete clause");
     };
 
     // multiple `default` clauses
@@ -303,7 +307,7 @@ macro_rules! select {
         ()
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             $count
@@ -320,7 +324,7 @@ macro_rules! select {
         ()
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             $count
@@ -336,7 +340,7 @@ macro_rules! select {
         ()
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             $count
@@ -352,7 +356,7 @@ macro_rules! select {
         ()
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             $count
@@ -368,7 +372,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(@missing-comma "default clause");
+        $crate::select_internal!(@missing-comma "default clause");
     };
 
     (@list
@@ -379,7 +383,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($pattern)
             ($pattern = $($token)*)
@@ -398,7 +402,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -414,7 +418,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -430,7 +434,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -446,7 +450,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -462,7 +466,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -478,7 +482,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -494,7 +498,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -510,7 +514,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -528,7 +532,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -544,7 +548,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -560,7 +564,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -576,7 +580,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -592,7 +596,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -608,7 +612,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -624,7 +628,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -640,7 +644,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -658,7 +662,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -674,7 +678,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -690,7 +694,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -706,7 +710,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -722,7 +726,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -738,7 +742,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -754,7 +758,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -770,7 +774,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ()
             ($($count)* _)
@@ -789,7 +793,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -805,7 +809,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -821,7 +825,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -837,7 +841,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -853,7 +857,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -869,7 +873,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -885,7 +889,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
         ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -901,7 +905,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(
+        $crate::select_internal!(
             @list
             ($($tokens)*)
             ($($count)* _)
@@ -919,7 +923,7 @@ macro_rules! select {
         $default:tt
         $complete:tt
     ) => {
-        $crate::select!(@missing-comma concat!("clause \"", stringify!($pattern = $future), "\""));
+        $crate::select_internal!(@missing-comma concat!("clause \"", stringify!($pattern = $future), "\""));
     };
 
 
@@ -944,16 +948,16 @@ macro_rules! select {
         default = $default:expr,
         complete = $complete:expr
     ) => {{
-        const BRANCHES: usize = $crate::select!(@count $count);
+        const BRANCHES: usize = $crate::select_internal!(@count $count);
         const COMPLETED: u64 = if BRANCHES == 64 { u64::MAX } else { (1u64 << BRANCHES) - 1 };
-        $crate::select!(@output-type $count);
+        $crate::select_internal!(@output-type $count);
         let mut output = {
             // Scope to drop before call evaluation code.
-            let mut __select_futures = ( $($crate::select!(@none $index) ,)* );
+            let mut __select_futures = ( $($crate::select_internal!(@none $index) ,)* );
             let mut __select_futures = &mut __select_futures;
             $(
                 if $condition {
-                    $crate::select!(@assign $index, __select_futures, Some($future));
+                    $crate::select_internal!(@assign $index, __select_futures, Some($future));
                 }
             )*
             ::core::future::poll_fn(|cx| {
@@ -964,9 +968,9 @@ macro_rules! select {
                     let branch = (start + i) % BRANCHES;
                     match branch {
                         $(
-                            $crate::select!(@count $index) => {
-                                let Some(future) = &mut $crate::select!(@access $index, __select_futures) else {
-                                    completions |= 1 << $crate::select!(@count $index);
+                            $crate::select_internal!(@count $index) => {
+                                let Some(future) = &mut $crate::select_internal!(@access $index, __select_futures) else {
+                                    completions |= 1 << $crate::select_internal!(@count $index);
                                     continue;
                                 };
                                 #[allow(unused_unsafe)]
@@ -975,15 +979,15 @@ macro_rules! select {
                                     ::core::task::Poll::Ready(output) => output,
                                     ::core::task::Poll::Pending => continue,
                                 };
-                                $crate::select!(@assign $index, __select_futures, ::core::option::Option::None);
-                                completions |= 1 << $crate::select!(@count $index);
+                                $crate::select_internal!(@assign $index, __select_futures, ::core::option::Option::None);
+                                completions |= 1 << $crate::select_internal!(@count $index);
                                 #[allow(unreachable_patterns)]
                                 #[allow(unused_variables)]
                                 match &mut output {
                                     $capture => {},
                                     _  => continue,
                                 };
-                                return ::core::task::Poll::Ready($crate::select!(@wrap $index, output));
+                                return ::core::task::Poll::Ready($crate::select_internal!(@wrap $index, output));
                             }
                          )*
                         _ => unreachable!("select! encounter mismatch branch in polling"),
@@ -1000,7 +1004,7 @@ macro_rules! select {
         };
         match output {
             $(
-                $crate::select!(@unwrap $index, $pattern) => $evaluation,
+                $crate::select_internal!(@unwrap $index, $pattern) => $evaluation,
              )*
             __SelectOutput::Completed => $complete,
             __SelectOutput::WouldBlock => $default,
@@ -1111,7 +1115,7 @@ macro_rules! select {
     (@count (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) => { 63 };
     (@count (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) => { 64 };
     (@count (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ $($_:pat)*)) => {
-        $crate::select!(@too-many-branches)
+        $crate::select_internal!(@too-many-branches)
     };
 
     (@access (), $futures:ident) => { $futures.0 };
@@ -1179,7 +1183,7 @@ macro_rules! select {
     (@access (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $futures:ident) => { $futures.62 };
     (@access (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $futures:ident) => { $futures.63 };
     (@access (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ $($_:pat)*) $($_2:tt)*) => {
-        $crate::select!(@too-many-branches)
+        $crate::select_internal!(@too-many-branches)
     };
 
     (@assign (), $futures:ident, $future:expr) => { $futures.0 = $future; };
@@ -1247,7 +1251,7 @@ macro_rules! select {
     (@assign (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $futures:ident, $future:expr) => { $futures.62 = $future; };
     (@assign (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $futures:ident, $future:expr) => { $futures.63 = $future; };
     (@assign (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ $($_:pat)*) $($_2:tt)*) => {
-        $crate::select!(@too-many-branches)
+        $crate::select_internal!(@too-many-branches)
     };
 
     (@wrap (), $name:ident) => { __SelectOutput::_0($name) };
@@ -1315,7 +1319,7 @@ macro_rules! select {
     (@wrap (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $name:ident) => { __SelectOutput::_62($name) };
     (@wrap (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $name:ident) => { __SelectOutput::_63($name) };
     (@wrap (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ $($_:pat)*) $($_2:tt)*) => {
-        $crate::select!(@too-many-branches)
+        $crate::select_internal!(@too-many-branches)
     };
 
     (@unwrap (), $pattern:pat) => { __SelectOutput::_0($pattern) };
@@ -1383,7 +1387,7 @@ macro_rules! select {
     (@unwrap (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $pattern:pat) => { __SelectOutput::_62($pattern) };
     (@unwrap (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _), $pattern:pat) => { __SelectOutput::_63($pattern) };
     (@unwrap (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ $($_:pat)*) $($_2:tt)*) => {
-        $crate::select!(@too-many-branches)
+        $crate::select_internal!(@too-many-branches)
     };
 
     (@output-type (_)) => {
@@ -2493,12 +2497,7 @@ macro_rules! select {
             _40(T40),
         }
     };
-    (@output-type (
-            _ _ _ _ _ _ _ _ _ _
-            _ _ _ _ _ _ _ _ _ _
-            _ _ _ _ _ _ _ _ _ _
-            _ _ _ _ _ _ _ _ _ _
-            _ _)) => {
+    (@output-type (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) => {
         enum __SelectOutput<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41> {
             Completed,
             WouldBlock,
@@ -2546,12 +2545,7 @@ macro_rules! select {
             _41(T41),
         }
     };
-    (@output-type (
-            _ _ _ _ _ _ _ _ _ _
-            _ _ _ _ _ _ _ _ _ _
-            _ _ _ _ _ _ _ _ _ _
-            _ _ _ _ _ _ _ _ _ _
-            _ _ _)) => {
+    (@output-type (_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _)) => {
         enum __SelectOutput<T0, T1, T2, T3, T4, T5, T6, T7, T8, T9, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42> {
             Completed,
             WouldBlock,
@@ -3934,7 +3928,7 @@ macro_rules! select {
 
     // Entry points.
     ($($tokens:tt)*) => {
-        $crate::select!(@list ($($tokens)*) () () () ())
+        $crate::select_internal!(@list ($($tokens)*) () () () ())
     }
 }
 
