@@ -67,8 +67,8 @@
 /// ```
 #[macro_export]
 macro_rules! select {
-    ($($tokens:tt)*) => {
-        $crate::select_internal!($($tokens)*)
+    ($($token:tt)*) => {
+        $crate::select_internal!($($token)*)
     };
 
     // For documentation purpose.
@@ -223,7 +223,7 @@ macro_rules! select_internal {
     };
     // `complete` in no last case.
     (@list
-        (complete => $body:block, $($tokens:tt)*)
+        (complete => $body:block, $($token:tt)*)
         $count:tt
         $branches:tt
         $default:tt
@@ -231,7 +231,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             $count
             $branches
             $default
@@ -239,7 +239,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (complete => $body:block $($tokens:tt)*)
+        (complete => $body:block $($token:tt)*)
         $count:tt
         $branches:tt
         $default:tt
@@ -247,7 +247,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             $count
             $branches
             $default
@@ -255,7 +255,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (complete => $body:expr, $($tokens:tt)*)
+        (complete => $body:expr, $($token:tt)*)
         $count:tt
         $branches:tt
         $default:tt
@@ -263,7 +263,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             $count
             $branches
             $default
@@ -271,7 +271,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (complete => $($tokens:tt)*)
+        (complete => $($token:tt)*)
         $count:tt
         $branches:tt
         $default:tt
@@ -318,7 +318,7 @@ macro_rules! select_internal {
     };
     // `default` in no last case
     (@list
-        (default => $body:block, $($tokens:tt)*)
+        (default => $body:block, $($token:tt)*)
         $count:tt
         $branches:tt
         ()
@@ -326,7 +326,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             $count
             $branches
             ($body)
@@ -334,7 +334,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (default => $body:block $($tokens:tt)*)
+        (default => $body:block $($token:tt)*)
         $count:tt
         $branches:tt
         ()
@@ -342,7 +342,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             $count
             $branches
             ($body)
@@ -350,7 +350,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (default => $body:expr, $($tokens:tt)*)
+        (default => $body:expr, $($token:tt)*)
         $count:tt
         $branches:tt
         ()
@@ -358,7 +358,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             $count
             $branches
             ($body)
@@ -366,7 +366,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (default => $($tokens:tt)*)
+        (default => $($token:tt)*)
         $count:tt
         $branches:tt
         $default:tt
@@ -396,7 +396,7 @@ macro_rules! select_internal {
 
     // block with trailing comma
     (@list
-        (ref mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block, $($tokens:tt)*)
+        (ref mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -404,7 +404,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -412,7 +412,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block, $($tokens:tt)*)
+        (ref $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -420,7 +420,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -428,7 +428,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block, $($tokens:tt)*)
+        (mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -436,7 +436,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -444,7 +444,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        ($pattern:pat = $future:expr, if $condition:expr => $body:block, $($tokens:tt)*)
+        ($pattern:pat = $future:expr, if $condition:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -452,7 +452,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if $condition => $body,)
             $default
@@ -460,7 +460,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref mut $ident:ident@$subpattern:pat = $future:expr => $body:block, $($tokens:tt)*)
+        (ref mut $ident:ident@$subpattern:pat = $future:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -468,7 +468,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if true => $body,)
             $default
@@ -476,7 +476,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref $ident:ident@$subpattern:pat = $future:expr => $body:block, $($tokens:tt)*)
+        (ref $ident:ident@$subpattern:pat = $future:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -484,7 +484,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if true => $body,)
             $default
@@ -492,7 +492,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (mut $ident:ident@$subpattern:pat = $future:expr => $body:block, $($tokens:tt)*)
+        (mut $ident:ident@$subpattern:pat = $future:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -500,7 +500,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if true => $body,)
             $default
@@ -508,7 +508,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        ($pattern:pat = $future:expr => $body:block, $($tokens:tt)*)
+        ($pattern:pat = $future:expr => $body:block, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -516,7 +516,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if true => $body,)
             $default
@@ -526,7 +526,7 @@ macro_rules! select_internal {
 
     // block without trailing comma
     (@list
-        (ref mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block $($tokens:tt)*)
+        (ref mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -534,7 +534,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -542,7 +542,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block $($tokens:tt)*)
+        (ref $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -550,7 +550,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -558,7 +558,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block $($tokens:tt)*)
+        (mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -566,7 +566,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -574,7 +574,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        ($pattern:pat = $future:expr, if $condition:expr => $body:block $($tokens:tt)*)
+        ($pattern:pat = $future:expr, if $condition:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -582,7 +582,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if $condition => $body,)
             $default
@@ -590,7 +590,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref mut $ident:ident@$subpattern:pat = $future:expr => $body:block $($tokens:tt)*)
+        (ref mut $ident:ident@$subpattern:pat = $future:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -598,7 +598,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if true => $body,)
             $default
@@ -606,7 +606,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref $ident:ident@$subpattern:pat = $future:expr => $body:block $($tokens:tt)*)
+        (ref $ident:ident@$subpattern:pat = $future:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -614,7 +614,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if true => $body,)
             $default
@@ -622,7 +622,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (mut $ident:ident@$subpattern:pat = $future:expr => $body:block $($tokens:tt)*)
+        (mut $ident:ident@$subpattern:pat = $future:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -630,7 +630,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if true => $body,)
             $default
@@ -638,7 +638,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        ($pattern:pat = $future:expr => $body:block $($tokens:tt)*)
+        ($pattern:pat = $future:expr => $body:block $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -646,7 +646,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if true => $body,)
             $default
@@ -787,7 +787,7 @@ macro_rules! select_internal {
 
     // expression with a trailing comma
     (@list
-        (ref mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:expr, $($tokens:tt)*)
+        (ref mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -795,7 +795,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -803,7 +803,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:expr, $($tokens:tt)*)
+        (ref $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -811,7 +811,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -819,7 +819,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:expr, $($tokens:tt)*)
+        (mut $ident:ident@$subpattern:pat = $future:expr, if $condition:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -827,7 +827,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if $condition => $body,)
             $default
@@ -835,7 +835,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        ($pattern:pat = $future:expr, if $condition:expr => $body:expr, $($tokens:tt)*)
+        ($pattern:pat = $future:expr, if $condition:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -843,7 +843,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if $condition => $body,)
             $default
@@ -851,7 +851,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref mut $ident:ident@$subpattern:pat = $future:expr => $body:expr, $($tokens:tt)*)
+        (ref mut $ident:ident@$subpattern:pat = $future:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -859,7 +859,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref mut $ident@$subpattern = $future, if true => $body,)
             $default
@@ -867,7 +867,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (ref $ident:ident@$subpattern:pat = $future:expr => $body:expr, $($tokens:tt)*)
+        (ref $ident:ident@$subpattern:pat = $future:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -875,7 +875,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] ref $ident@$subpattern = $future, if true => $body,)
             $default
@@ -883,7 +883,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        (mut $ident:ident@$subpattern:pat = $future:expr => $body:expr, $($tokens:tt)*)
+        (mut $ident:ident@$subpattern:pat = $future:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -891,7 +891,7 @@ macro_rules! select_internal {
         ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $subpattern] mut $ident@$subpattern = $future, if true => $body,)
             $default
@@ -899,7 +899,7 @@ macro_rules! select_internal {
         )
     };
     (@list
-        ($pattern:pat = $future:expr => $body:expr, $($tokens:tt)*)
+        ($pattern:pat = $future:expr => $body:expr, $($token:tt)*)
         ($($count:tt)*)
         ($($branch:tt)*)
         $default:tt
@@ -907,7 +907,7 @@ macro_rules! select_internal {
     ) => {
         $crate::select_internal!(
             @list
-            ($($tokens)*)
+            ($($token)*)
             ($($count)* _)
             ($($branch)* [($($count)*), $pattern] $pattern = $future, if true => $body,)
             $default
@@ -917,7 +917,7 @@ macro_rules! select_internal {
 
     // complain missing comma.
     (@list
-        ($pattern:pat = $future:expr $(, if condition:expr)? => $($tokens:tt)*)
+        ($pattern:pat = $future:expr $(, if condition:expr)? => $($token:tt)*)
         $count:tt
         $branches:tt
         $default:tt
@@ -3927,8 +3927,8 @@ macro_rules! select_internal {
     };
 
     // Entry points.
-    ($($tokens:tt)*) => {
-        $crate::select_internal!(@list ($($tokens)*) () () () ())
+    ($($token:tt)*) => {
+        $crate::select_internal!(@list ($($token)*) () () () ())
     }
 }
 
