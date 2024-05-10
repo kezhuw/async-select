@@ -48,6 +48,27 @@
 ///   false negative compilation error.
 /// * `async_select::select!` is dependency free and hence `no_std` compatible.
 ///
+/// ## Polling order
+/// By default, the polling order of each branch is indeterminate. Use `biased;` to poll
+/// sequentially if desired.
+/// ```
+/// use async_select::select;
+/// use core::future::{pending, ready};
+///
+/// async fn poll_sequentially() {
+///     let r = select! {
+///         biased;
+///         default => unreachable!(),
+///         _ = pending() => unreachable!(),
+///         _ = pending() => unreachable!(),
+///         v = ready(5) => v,
+///         v = ready(6) => v,
+///         v = ready(7) => v,
+///     };
+///     assert_eq!(r, 5);
+/// }
+/// ```
+///
 /// ## Efficiency
 /// `select!` blindly `Future:poll` all enabled futures without checking for waking branch.
 ///
