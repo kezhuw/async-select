@@ -120,10 +120,14 @@ async fn not_ready_complete_with_default() {
     assert_eq!(r, 6);
 }
 
+fn none() -> Option<i32> {
+    None
+}
+
 #[tokio::test]
 #[should_panic(expected = "all branches are disabled or completed")]
 async fn all_disabled_panic() {
-    let opt: Option<i32> = None;
+    let opt: Option<i32> = none();
     select! {
         v = ready(opt.unwrap()), if opt.is_some() => v,
     };
@@ -131,7 +135,7 @@ async fn all_disabled_panic() {
 
 #[tokio::test]
 async fn all_disabled_default() {
-    let opt: Option<i32> = None;
+    let opt: Option<i32> = none();
     let r = select! {
         v = ready(opt.unwrap()), if opt.is_some() => v,
         default => 6,
@@ -141,7 +145,7 @@ async fn all_disabled_default() {
 
 #[tokio::test]
 async fn all_disabled_complete() {
-    let opt: Option<i32> = None;
+    let opt: Option<i32> = none();
     let r = select! {
         v = ready(opt.unwrap()), if opt.is_some() => v,
         complete => 7,
@@ -151,7 +155,7 @@ async fn all_disabled_complete() {
 
 #[tokio::test]
 async fn all_disabled_complete_with_default() {
-    let opt: Option<i32> = None;
+    let opt: Option<i32> = none();
     let r = select! {
         v = ready(opt.unwrap()), if opt.is_some() => v,
         default => 6,

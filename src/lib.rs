@@ -1094,6 +1094,7 @@ macro_rules! select_internal {
             ::core::future::poll_fn(|cx| {
                 let mut completions = 0;
                 for i in 0..BRANCHES {
+                    #[allow(clippy::modulo_one)]
                     let branch = (start + i) % BRANCHES;
                     match branch {
                         $(
