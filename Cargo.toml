@@ -4,7 +4,7 @@ members = ["macros"]
 [workspace.package]
 authors = ["Kezhu Wang <kezhuw@gmail.com>"]
 license = "Apache-2.0"
-version = "0.2.1"
+version = "0.3.0"
 homepage = "https://github.com/kezhuw/async-select"
 repository = "https://github.com/kezhuw/async-select"
 description = "`select!` multiplex asynchronous futures simultaneously"
@@ -25,7 +25,7 @@ edition.workspace = true
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-async-select-proc-macros = { version = "0.2.1", path = "./macros"}
+async-select-proc-macros = { version = "0.3.0", path = "./macros" }
 
 [dev-dependencies]
 tokio = { version = "1.37.0", features = ["full"] }
