@@ -18,4 +18,4 @@ test:
 	cargo test --all-features
 
 doc:
-	cargo doc --all-features
+	cargo doc --all-features --workspace

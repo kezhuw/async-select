@@ -329,5 +329,17 @@ async fn blocking64<T>() -> T {
         _i = pending() => unreachable!(),
         _i = pending() => unreachable!(),
         _i = pending() => unreachable!(),
+
+        // More than 64 branches
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
+        _i = pending() => unreachable!(),
     }
 }
