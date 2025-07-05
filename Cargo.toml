@@ -1,5 +1,7 @@
-[package]
-name = "async-select"
+[workspace]
+members = ["macros"]
+
+[workspace.package]
 authors = ["Kezhu Wang <kezhuw@gmail.com>"]
 license = "Apache-2.0"
 version = "0.2.1"
@@ -9,9 +11,21 @@ description = "`select!` multiplex asynchronous futures simultaneously"
 documentation = "https://docs.rs/async-select"
 edition = "2021"
 
+[package]
+name = "async-select"
+authors.workspace = true
+license.workspace = true
+version.workspace = true
+homepage.workspace = true
+repository.workspace = true
+description.workspace = true
+documentation.workspace = true
+edition.workspace = true
+
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
+async-select-proc-macros = { version = "0.2.1", path = "./macros"}
 
 [dev-dependencies]
 tokio = { version = "1.37.0", features = ["full"] }

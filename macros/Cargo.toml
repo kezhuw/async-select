@@ -1,0 +1,18 @@
+[package]
+name = "async-select-proc-macros"
+authors.workspace = true
+license.workspace = true
+version.workspace = true
+homepage.workspace = true
+repository.workspace = true
+description.workspace = true
+documentation.workspace = true
+edition.workspace = true
+
+[lib]
+proc-macro = true
+
+[dependencies]
+syn = {version = "2", features = ["full", "clone-impls"]}
+quote = "1"
+proc-macro2 = "1.0.95"
