@@ -19,7 +19,7 @@ impl Parse for Clause {
         let expr = Expr::parse_with_earlier_boundary_rule(input)?;
         if matches!(expr, Expr::Block(_)) {
             input.parse::<Option<Token![,]>>()?;
-        } else {
+        } else if !input.is_empty() {
             input.parse::<Token![,]>()?;
         }
         Ok(Clause { expr })
